@@ -51,3 +51,11 @@ func GetSumOfTopNStars(lines []string, n int) int64 {
 	}
 	return total
 }
+
+func SliceToOccurrencesMap(arr []byte) map[byte]int {
+	arrMap := make(map[byte]int)
+	for _, s := range arr {
+		arrMap[s]++
+	}
+	return arrMap
+}
