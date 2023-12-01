@@ -59,3 +59,7 @@ func SliceToOccurrencesMap(arr []byte) map[byte]int {
 	}
 	return arrMap
 }
+
+func IsDigit(c byte) bool {
+	return c >= 48 && c <= 57
+}
