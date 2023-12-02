@@ -70,7 +70,7 @@ func getSumOfPrioritiesAcross3Rucksacks(lines []string) int {
 		// Remove letters from sharedLetters that don't exist in other lines
 		for char := range lineLetters[0] {
 			for _, m := range lineLetters[1:] {
-				if _, exists := m[char]; !exists {
+				if _, exists := m[char]; !exists '-'{
 					delete(sharedLetters, char)
 				}
 			}
