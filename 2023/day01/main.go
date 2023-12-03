@@ -25,6 +25,8 @@ func main() {
 
 func part1(lines []string) int {
 	sum := 0
+
+	// Iterate from front and back of line until a digit is found
 	for _, line := range lines {
 		lVal, rVal := -1, -1
 		l, r := 0, len(line)-1
@@ -53,7 +55,6 @@ func part2(lines []string) int {
 
 	sum := 0
 	for _, line := range lines {
-		//fmt.Print(line)
 		numsByIndex := make([]int, len(line))
 
 		//	Get indexes of any spelled numbers
@@ -95,3 +96,4 @@ func part2(lines []string) int {
 	}
 	return sum
 }
+
