@@ -60,6 +60,35 @@ func SliceToOccurrencesMap(arr []byte) map[byte]int {
 	return arrMap
 }
 
+func SliceToMap(arr []string) map[string]int {
+	arrMap := make(map[string]int)
+	for _, s := range arr {
+		arrMap[s]++
+	}
+	return arrMap
+}
 func IsDigit(c byte) bool {
 	return c >= 48 && c <= 57
+}
+
+func SplitEveryN(s string, n int) []string {
+	if n <= 0 || n >= len(s) {
+		return []string{s}
+	}
+
+	var arr []string
+	str := ""
+	for _, c := range s {
+		str += string(c)
+		if len(str) == n {
+			arr = append(arr, str)
+			str = ""
+		}
+	}
+	if len(str) > 0 {
+		arr = append(arr, str)
+
+	}
+
+	return arr
 }
