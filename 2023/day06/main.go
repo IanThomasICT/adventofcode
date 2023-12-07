@@ -10,8 +10,8 @@ import (
 
 func main() {
 
-	// fileName := "input"
-	fileName := "test.txt"
+	fileName := "input"
+	// fileName := "test.txt"
 	lines, err := h.ReadLinesAsArray(fileName)
 	if err != nil {
 		log.Fatalf("failed to get lines as []string: %s", err)
@@ -90,47 +90,19 @@ func getNumOfProductPairsAboveValue(l int, h int, record int) int {
 	step := int(math.Sqrt(float64(h)))
 
 	i := step
-	var product int64
 	var limit int64 = int64(record)
 
 	// Find general left edge
-	for ; i < h; i += step {
-		product = int64(l+i) * int64(h-i)
-		if product > limit {
-			break
+	aboveLimit := 0
+	for ; i < h; i++ {
+		product, err := MultiplyExact(int64(l+i), int64(h-i))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if err != nil || product > limit {
+			aboveLimit++
 		}
 	}
-	i -= step
-
-	// Get leading fine edge
-	product = int64(l+i) * int64(h-i)
-	for product <= limit {
-		product = int64(l+i) * int64(h-i)
-		i++
-	}
-	fmt.Printf("leading edge at Lower: %d, Higher: %d, Record: %d => %d\n", l+i, h-i, limit, (l+i)*(h-i))
-
-	aboveLimit := 1
-	for ; i < h; i += step {
-		product = int64(l+i) * int64(h-i)
-		if product < limit {
-			break
-		} else {
-			aboveLimit += step
-		}
-	}
-	i -= step
-	aboveLimit -= step
-
-	product = int64(l+i) * int64(h-i)
-	for product > limit {
-		product = int64(l+i) * int64(h-i)
-		i++
-		aboveLimit++
-	}
-	aboveLimit--
-	fmt.Println("aboveLimit", aboveLimit)
-
 	return aboveLimit
 
 }
@@ -141,4 +113,21 @@ func concatAsString(arr []int) string {
 		str += strconv.FormatInt(int64(num), 10)
 	}
 	return str
+}
+
+const mostNegative = -(mostPositive + 1)
+const mostPositive = 1<<63 - 1
+
+func MultiplyExact(a, b int64) (int64, error) {
+	result := a * b
+	if a == 0 || b == 0 || a == 1 || b == 1 {
+		return result, nil
+	}
+	if a == mostNegative || b == mostNegative {
+		return result, fmt.Errorf("Overflow multiplying %v and %v", a, b)
+	}
+	if result/b != a {
+		return result, fmt.Errorf("Overflow multiplying %v and %v", a, b)
+	}
+	return result, nil
 }
