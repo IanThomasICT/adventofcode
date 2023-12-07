@@ -96,4 +96,3 @@ func part2(lines []string) int {
 	}
 	return sum
 }
-

@@ -42,15 +42,19 @@ func part1(lines []string) int {
 
 func part2(lines []string) int {
 	// function info
-	time := concatAsString(getNumbers(lines[0]))
-	distance := concatAsString(getNumbers(lines[1]))
 
-	// getNumOfProductPairsAboveValue(0, totalTime, recordDistance)
+	timeStr := concatAsString(getNumbers(lines[0]))
+	distanceStr := concatAsString(getNumbers(lines[1]))
+
+	time, _ := strconv.Atoi(timeStr)
+	distance, _ := strconv.Atoi(distanceStr)
 
 	fmt.Println(time, distance)
 
-	return 0
+	// 71503
+	return getNumOfProductPairsAboveValue(0, time, distance)
 }
+
 func getNumbers(line string) []int {
 	numbers := []int{}
 	// Get times
@@ -81,29 +85,35 @@ func getNumbers(line string) []int {
 	return numbers
 }
 
-func getNumOfProductPairsAboveValue(l int, h int, limit int) int {
+func getNumOfProductPairsAboveValue(l int, h int, record int) int {
 
 	step := int(math.Sqrt(float64(h)))
 
 	i := step
-	fmt.Println("Step", step)
+	var product int64
+	var limit int64 = int64(record)
+
 	// Find general left edge
 	for ; i < h; i += step {
-		if (l+i)*(h-i) > limit {
+		product = int64(l+i) * int64(h-i)
+		if product > limit {
 			break
 		}
 	}
 	i -= step
 
 	// Get leading fine edge
-	for (l+i)*(h-i) < limit {
+	product = int64(l+i) * int64(h-i)
+	for product <= limit {
+		product = int64(l+i) * int64(h-i)
 		i++
 	}
-	fmt.Println("leading edge at", i, (l+i)*(h-i))
+	fmt.Printf("leading edge at Lower: %d, Higher: %d, Record: %d => %d\n", l+i, h-i, limit, (l+i)*(h-i))
 
-	aboveLimit := 0
+	aboveLimit := 1
 	for ; i < h; i += step {
-		if (l+i)*(h-i) < limit {
+		product = int64(l+i) * int64(h-i)
+		if product < limit {
 			break
 		} else {
 			aboveLimit += step
@@ -112,11 +122,14 @@ func getNumOfProductPairsAboveValue(l int, h int, limit int) int {
 	i -= step
 	aboveLimit -= step
 
-	for (l+i)*(h-i) > limit {
+	product = int64(l+i) * int64(h-i)
+	for product > limit {
+		product = int64(l+i) * int64(h-i)
 		i++
 		aboveLimit++
 	}
-	fmt.Println("limit", aboveLimit)
+	aboveLimit--
+	fmt.Println("aboveLimit", aboveLimit)
 
 	return aboveLimit
 
