@@ -45,9 +45,11 @@ func sumOfAdjacentParts(rows []string) int {
 	parts := map[string]int{} // key: ij, val: partNum
 	for i, row := range rows {
 		for j, char := range row {
+			// Skip if char is not a symbol
 			if char == '.' || h.IsDigit(byte(char)) {
 				continue
 			}
+
 			// char is a symbol
 			coords := GetSurroundingCoords(i, j, len(rows), len(row))
 

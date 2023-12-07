@@ -1,122 +1,181 @@
 package main
 
 import (
-	"cmp"
 	"fmt"
 	h "ianthomasict/adventofcode/helpers"
 	"log"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
 
-	// fileName := "input.txt"
 	fileName := "test.txt"
 	lines, err := h.ReadLinesAsArray(fileName)
 	if err != nil {
 		log.Fatalf("failed to get lines as []string: %s", err)
 	}
 
-	fmt.Println("part 1:", part1(lines))
-	// fmt.Println("part 2:", part1(lines))
+	fmt.Println("test:", part2(lines))
+
+	// fileName = "input"
+	// lines, err = h.ReadLinesAsArray(fileName)
+	// if err != nil {
+	// 	log.Fatalf("failed to get lines as []string: %s", err)
+	// }
+	// fmt.Println("part 1:", part1(lines))
+	// fmt.Println("part 2:", part2(lines))
 
 }
 
-// seeds: 79 14 55 13
-//
-// seed-to-soil map:
-// 50 98 2
-// 52 50 48
-//
-// soil-to-fertilizer map:
-// 0 15 37
-// 37 52 2
-// 39 0 15
-
-type RangeInstruction struct {
-	Start    int64
-	End      int64
-	ChangeBy int
+type SeedRange struct {
+	Start int64
+	End   int64
 }
 
-type Seed struct {
-	originalVal int64
-	val         int64
+type OffsetRange struct {
+	Start  int64
+	End    int64
+	Offset int64
 }
 
-func part1(lines []string) int {
+func part1(lines []string) int64 {
 	// read seeds
 	seedLine := strings.Split(lines[0], ": ")[1]
-	seeds := []Seed{}
+	seeds := []int64{}
 	for _, seed := range strings.Split(seedLine, " ") {
-		val, err := strconv.ParseInt(seed, 10, 64)
-		if err != nil {
-			log.Fatalf("Failed to parse %s to an int64", seed)
-		}
-		seeds = append(seeds, Seed{originalVal: val, val: val})
+		val := ParseInt64(seed)
+		seeds = append(seeds, val)
 	}
-	slices.SortFunc(seeds, func(a Seed, b Seed) int {
-		return cmp.Compare(a.originalVal, b.originalVal)
-	})
-	fmt.Println(seeds)
 
-	stages := [7][]RangeInstruction{}
-
-	l, stage := 2, 0
-	for l < len(lines) {
-		l++
-		if IsBlank(lines[l]) {
-			continue
-		}
-
-		if strings.Contains(lines[l], "map") {
-			l++
-
-			instructions := []RangeInstruction{}
-			// parse map until reaching a blank line or end of the file
-			for l < len(lines) && !IsBlank(lines[l]) {
-				inst := SplitToInt64Slice(lines[l], " ")
-				to, from, rng := inst[0], inst[1], inst[2]
-				instructions = append(instructions, RangeInstruction{Start: from, End: from + rng, ChangeBy: int(to - from)})
-				l++
-			}
-			slices.SortFunc(instructions, func(a RangeInstruction, b RangeInstruction) int {
-				return cmp.Compare(a.Start, b.Start)
-			})
-			// fmt.Println(instructions)
-
-			stages[stage] = instructions
-			stage++
-		}
-	}
-	for _, stage := range stages {
-		fmt.Println(stage)
-	}
+	stages := getOffsetInstructions(lines)
 
 	for _, stage := range stages {
-		for _, seed := range seeds {
-			rangeIdx := slices.IndexFunc(stage, func(ri RangeInstruction) bool {
-				if seed.val >= ri.Start && seed.val <= ri.End {
+		for s := range seeds {
+			rangeIdx := slices.IndexFunc(stage, func(ri OffsetRange) bool {
+				if seeds[s] >= ri.Start && seeds[s] <= ri.End {
 					return true
 				}
 				return false
 			})
 			if rangeIdx == -1 {
-				log.Fatalf("Unable to place seed value %d within stage ranges %v", seed.val, stage)
+				continue
 			}
 
 			ri := stage[rangeIdx]
-			seed.val = seed.val + int64(ri.ChangeBy)
+			seeds[s] += ri.Offset
 		}
 	}
 
-	fmt.Println("Seeds after convesion:", seeds)
+	sort.Slice(seeds, func(i, j int) bool {
+		return seeds[i] < seeds[j]
+	})
 
-	return 0
+	var lowestLocation int64 = seeds[0]
+
+	return lowestLocation
 }
 
+func part2(lines []string) int64 {
+	// read seeds
+	seedLine := strings.Split(lines[0], ": ")[1]
+	seedParts := strings.Split(seedLine, " ")
+
+	ogSeedRange := []SeedRange{}
+	for s := 0; s < len(seedParts)-1; s += 2 {
+		pair := seedParts[s : s+2]
+		startVal, numOfSeeds := ParseInt64(pair[0]), ParseInt64(pair[1])
+		ogSeedRange = append(ogSeedRange, SeedRange{Start: startVal, End: startVal + numOfSeeds - 1})
+	}
+
+	sort.Slice(ogSeedRange, func(i, j int) bool {
+		return ogSeedRange[i].Start < ogSeedRange[j].Start
+	})
+
+	stages := getOffsetInstructions(lines)
+
+	fmt.Println("Starting seed ranges:")
+	rangeMap := map[string]SeedRange{}
+	for _, sr := range ogSeedRange {
+		rangeMap[fmt.Sprintf("%d-%d", sr.Start, sr.End)] = sr
+		fmt.Println("", sr)
+	}
+
+	for i, stage := range stages {
+		fmt.Println("Stage:", i+1)
+		newRangeMap := map[string]SeedRange{}
+		for _, seedRange := range rangeMap {
+			// if range is outside of lowest or highest instruction range, skip
+			if (seedRange.Start < stage[0].Start && seedRange.End < stage[0].End) || (seedRange.Start > stage[len(stage)-1].End && seedRange.End > stage[len(stage)-1].End) {
+				continue
+			}
+
+			// seed range is within some instructions
+			offsets := getOffsetsForSeedRange(seedRange, stage)
+
+			// Create new seed ranges from offsets
+			for _, ri := range offsets {
+				newStart, newEnd := ri.Start+ri.Offset, ri.End+ri.Offset
+				newRangeMap[fmt.Sprintf("%d-%d", newStart, newEnd)] = SeedRange{Start: newStart, End: newEnd}
+			}
+		}
+		rangeMap = newRangeMap
+		fmt.Println("Updated range map:")
+		for _, v := range rangeMap {
+			fmt.Println("", v)
+		}
+	}
+
+	locationRanges := []SeedRange{}
+	for _, v := range rangeMap {
+		locationRanges = append(locationRanges, v)
+	}
+
+	sort.Slice(locationRanges, func(i, j int) bool {
+		return locationRanges[i].Start < locationRanges[j].Start
+	})
+
+	var lowestLocation int64 = locationRanges[0].Start
+
+	return lowestLocation
+}
+
+func getOffsetsForSeedRange(seedRng SeedRange, stage []OffsetRange) []OffsetRange {
+	newRanges := []OffsetRange{}
+
+	if (seedRng.Start < stage[0].Start && seedRng.End < stage[0].Start) || (seedRng.Start > stage[len(stage)-1].End && seedRng.End > stage[len(stage)-1].End) {
+		return []OffsetRange{{Start: seedRng.Start, End: seedRng.End, Offset: 0}}
+	}
+
+	// For half before and half inside first offset range, offset by 0
+	if seedRng.Start < stage[0].Start && seedRng.End > stage[0].Start {
+		newRanges = append(newRanges, OffsetRange{Start: seedRng.Start, End: stage[0].Start - 1, Offset: 0})
+	}
+
+	for _, ri := range stage {
+		// Start is fully inside offset range
+		if seedRng.Start > ri.Start && seedRng.Start < ri.End {
+			newRanges = append(newRanges, OffsetRange{Start: seedRng.Start, End: min(ri.End, seedRng.End), Offset: ri.Offset})
+		} else if seedRng.End < ri.End {
+			newRanges = append(newRanges, OffsetRange{Start: ri.Start, End: seedRng.End, Offset: ri.Offset})
+		} else {
+			newRanges = append(newRanges, ri)
+		}
+	}
+
+	// For seed range after last stage, offset by 0
+	if seedRng.End > stage[len(stage)-1].End && seedRng.Start < stage[len(stage)-1].End {
+		newRanges = append(newRanges, OffsetRange{Start: stage[len(stage)-1].End + 1, End: seedRng.End, Offset: 0})
+	}
+
+	fmt.Println("Split range", seedRng, "into", newRanges)
+
+	return newRanges
+}
+
+// region Helpers
 func IsBlank(s string) bool {
 	blank := s == "" || s == " " || s == "\n"
 	if blank {
@@ -145,3 +204,47 @@ func SplitToInt64Slice(s string, del string) []int64 {
 
 	return nums
 }
+
+func ParseInt64(s string) int64 {
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		log.Fatalf("Failed to parse %s to an int64", s)
+	}
+	return val
+}
+
+func getOffsetInstructions(lines []string) [7][]OffsetRange {
+	stages := [7][]OffsetRange{}
+
+	stage := 0
+	for l := 1; l < len(lines); l++ {
+		if IsBlank(lines[l]) {
+			continue
+		}
+
+		if strings.Contains(lines[l], "map") {
+			l++
+
+			instructions := []OffsetRange{}
+			// parse map until reaching a blank line or end of the file
+			for l < len(lines) && !IsBlank(lines[l]) {
+				inst := SplitToInt64Slice(lines[l], " ")
+				to, from, rng := inst[0], inst[1], inst[2]
+				instructions = append(instructions, OffsetRange{Start: from, End: from + rng, Offset: to - from})
+				l++
+			}
+
+			// Sort instructions by Start value
+			sort.Slice(instructions, func(i, j int) bool {
+				return instructions[i].Start < instructions[j].Start
+			})
+
+			stages[stage] = instructions
+			stage++
+		}
+	}
+
+	return stages
+}
+
+//endregion
