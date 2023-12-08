@@ -96,50 +96,25 @@ func part2(lines []string) int64 {
 
 	stages := getOffsetInstructions(lines)
 
-	fmt.Println("Starting seed ranges:")
-	rangeMap := map[string]SeedRange{}
-	for _, sr := range ogSeedRange {
-		rangeMap[fmt.Sprintf("%d-%d", sr.Start, sr.End)] = sr
-		fmt.Println("", sr)
-	}
+	for i := len(stages) - 1; i >= 0; i-- {
+		stage := &stages[i]
+		for l := int64(0); l < ogSeedRange[len(ogSeedRange)-1].End; l += 5 {
 
-	for i, stage := range stages {
-		fmt.Println("Stage:", i+1)
-		newRangeMap := map[string]SeedRange{}
-		for _, seedRange := range rangeMap {
-			// if range is outside of lowest or highest instruction range, skip
-			if (seedRange.Start < stage[0].Start && seedRange.End < stage[0].End) || (seedRange.Start > stage[len(stage)-1].End && seedRange.End > stage[len(stage)-1].End) {
-				continue
-			}
-
-			// seed range is within some instructions
-			offsets := getOffsetsForSeedRange(seedRange, stage)
-
-			// Create new seed ranges from offsets
-			for _, ri := range offsets {
-				newStart, newEnd := ri.Start+ri.Offset, ri.End+ri.Offset
-				newRangeMap[fmt.Sprintf("%d-%d", newStart, newEnd)] = SeedRange{Start: newStart, End: newEnd}
-			}
-		}
-		rangeMap = newRangeMap
-		fmt.Println("Updated range map:")
-		for _, v := range rangeMap {
-			fmt.Println("", v)
 		}
 	}
 
-	locationRanges := []SeedRange{}
-	for _, v := range rangeMap {
-		locationRanges = append(locationRanges, v)
-	}
-
-	sort.Slice(locationRanges, func(i, j int) bool {
-		return locationRanges[i].Start < locationRanges[j].Start
+	sort.Slice(seeds, func(i, j int) bool {
+		return seeds[i] < seeds[j]
 	})
 
-	var lowestLocation int64 = locationRanges[0].Start
+	var lowestLocation int64 = seeds[0]
 
 	return lowestLocation
+	return lowestLocation
+}
+
+func rapidOffset(loc int, stages [7][]OffsetRange) {
+
 }
 
 func getOffsetsForSeedRange(seedRng SeedRange, stage []OffsetRange) []OffsetRange {
