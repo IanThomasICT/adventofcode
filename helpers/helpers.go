@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 func ReadLinesAsArray(fileName string) ([]string, error) {
@@ -91,4 +92,50 @@ func SplitEveryN(s string, n int) []string {
 	}
 
 	return arr
+}
+
+func SplitToIntSlice(s string, del string) []int {
+	splitElems := strings.Split(s, del)
+	nums := []int{}
+
+	for _, str := range splitElems {
+		val, err := strconv.Atoi(str)
+		if err != nil {
+			log.Fatalf("Failed to parse %s to an int while splitting string %s", str, s)
+		}
+		nums = append(nums, val)
+	}
+
+	return nums
+}
+
+func SplitToInt64Slice(s string, del string) []int64 {
+	splitElems := strings.Split(s, del)
+	nums := []int64{}
+
+	for _, str := range splitElems {
+		val, err := strconv.ParseInt(str, 10, 64)
+		if err != nil {
+			log.Fatalf("Failed to parse %s to an int64 while splitting string %s", str, s)
+		}
+		nums = append(nums, val)
+	}
+
+	return nums
+}
+
+func ParseInt(s string) int {
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatalf("Failed to parse %s to an int", s)
+	}
+	return val
+}
+
+func ParseInt64(s string) int64 {
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		log.Fatalf("Failed to parse %s to an int64", s)
+	}
+	return val
 }
