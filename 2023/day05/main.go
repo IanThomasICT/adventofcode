@@ -12,21 +12,21 @@ import (
 
 func main() {
 
-	fileName := "test.txt"
+	// fileName := "test.txt"
+	// lines, err := h.ReadLinesAsArray(fileName)
+	// if err != nil {
+	// 	log.Fatalf("failed to get lines as []string: %s", err)
+	// }
+	//
+	// fmt.Println("test:", part2(lines))
+
+	fileName := "input"
 	lines, err := h.ReadLinesAsArray(fileName)
 	if err != nil {
 		log.Fatalf("failed to get lines as []string: %s", err)
 	}
-
-	fmt.Println("test:", part2(lines))
-
-	// fileName = "input"
-	// lines, err = h.ReadLinesAsArray(fileName)
-	// if err != nil {
-	// 	log.Fatalf("failed to get lines as []string: %s", err)
-	// }
-	// fmt.Println("part 1:", part1(lines))
-	// fmt.Println("part 2:", part2(lines))
+	fmt.Println("part 1:", part1(lines))
+	fmt.Println("part 2:", part2(lines))
 
 }
 
@@ -50,10 +50,23 @@ func part1(lines []string) int64 {
 		seeds = append(seeds, val)
 	}
 
+	fmt.Println("Seed count:", len(seeds))
+
 	stages := getOffsetInstructions(lines)
 
-	for _, stage := range stages {
+	for i, stage := range stages {
+		fmt.Println("Stage", i+1)
 		for s := range seeds {
+			switch s {
+			case len(seeds) / 4:
+				fmt.Println("Converted 25%")
+			case len(seeds) / 2:
+				fmt.Println("Converted 50%")
+			case (len(seeds) / 4) * 3:
+				fmt.Println("Converted 75%")
+			default:
+			}
+
 			rangeIdx := slices.IndexFunc(stage, func(ri OffsetRange) bool {
 				if seeds[s] >= ri.Start && seeds[s] <= ri.End {
 					return true
@@ -83,33 +96,62 @@ func part2(lines []string) int64 {
 	seedLine := strings.Split(lines[0], ": ")[1]
 	seedParts := strings.Split(seedLine, " ")
 
-	ogSeedRange := []SeedRange{}
+	seedsPairs := [][]int64{}
 	for s := 0; s < len(seedParts)-1; s += 2 {
 		pair := seedParts[s : s+2]
 		startVal, numOfSeeds := ParseInt64(pair[0]), ParseInt64(pair[1])
-		ogSeedRange = append(ogSeedRange, SeedRange{Start: startVal, End: startVal + numOfSeeds - 1})
-	}
-
-	sort.Slice(ogSeedRange, func(i, j int) bool {
-		return ogSeedRange[i].Start < ogSeedRange[j].Start
-	})
-
-	stages := getOffsetInstructions(lines)
-
-	for i := len(stages) - 1; i >= 0; i-- {
-		stage := &stages[i]
-		for l := int64(0); l < ogSeedRange[len(ogSeedRange)-1].End; l += 5 {
-
+		fmt.Printf("Adding seeds from [%d - %d]\n", startVal, startVal+numOfSeeds)
+		seeds := []int64{}
+		for i := int64(0); i < numOfSeeds; i++ {
+			seeds = append(seeds, int64(startVal+i))
 		}
+		seedsPairs = append(seedsPairs, seeds)
 	}
 
-	sort.Slice(seeds, func(i, j int) bool {
-		return seeds[i] < seeds[j]
-	})
+	var lowestLocation int64 = 200_000_000_000
+	for _, seeds := range seedsPairs {
 
-	var lowestLocation int64 = seeds[0]
+		fmt.Println("Seed count:", len(seeds))
 
-	return lowestLocation
+		stages := getOffsetInstructions(lines)
+
+		for i, stage := range stages {
+			fmt.Println("Stage", i+1)
+			for s := range seeds {
+				switch s {
+				case len(seeds) / 4:
+					fmt.Println("Converted 25%")
+				case len(seeds) / 2:
+					fmt.Println("Converted 50%")
+				case (len(seeds) / 4) * 3:
+					fmt.Println("Converted 75%")
+				default:
+				}
+
+				rangeIdx := slices.IndexFunc(stage, func(ri OffsetRange) bool {
+					if seeds[s] >= ri.Start && seeds[s] <= ri.End {
+						return true
+					}
+					return false
+				})
+				if rangeIdx == -1 {
+					continue
+				}
+
+				ri := stage[rangeIdx]
+				seeds[s] += ri.Offset
+			}
+		}
+
+		sort.Slice(seeds, func(i, j int) bool {
+			return seeds[i] < seeds[j]
+		})
+
+		var lowLoc int64 = seeds[0]
+		fmt.Println("Lowest location for seed pairs", lowLoc)
+		lowestLocation = min(lowLoc, lowestLocation)
+	}
+
 	return lowestLocation
 }
 
