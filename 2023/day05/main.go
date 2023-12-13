@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get lines as []string: %s", err)
 	}
-	fmt.Println("part 1:", part1(lines))
+	// fmt.Println("part 1:", part1(lines))
 	fmt.Println("part 2:", part2(lines))
 
 }
@@ -91,72 +91,87 @@ func part1(lines []string) int64 {
 	return lowestLocation
 }
 
+type Seed struct {
+	original int64
+	val      int64
+}
+
 func part2(lines []string) int64 {
 	// read seeds
 	seedLine := strings.Split(lines[0], ": ")[1]
 	seedParts := strings.Split(seedLine, " ")
 
-	seedsPairs := [][]int64{}
+	seedRanges := [][]int64{}
 	for s := 0; s < len(seedParts)-1; s += 2 {
 		pair := seedParts[s : s+2]
 		startVal, numOfSeeds := ParseInt64(pair[0]), ParseInt64(pair[1])
-		fmt.Printf("Adding seeds from [%d - %d]\n", startVal, startVal+numOfSeeds)
-		seeds := []int64{}
-		for i := int64(0); i < numOfSeeds; i++ {
-			seeds = append(seeds, int64(startVal+i))
-		}
-		seedsPairs = append(seedsPairs, seeds)
+		seedRanges = append(seedRanges, []int64{startVal, startVal + numOfSeeds})
+	}
+
+	sort.Slice(seedRanges, func(i, j int) bool {
+		return seedRanges[i][0] < seedRanges[j][0]
+	})
+
+	// Where is this? 1212778760
+	for f := range seedRanges {
+		fmt.Println(seedRanges[f])
 	}
 
 	var lowestLocation int64 = 200_000_000_000
-	for _, seeds := range seedsPairs {
 
-		fmt.Println("Seed count:", len(seeds))
+	stages := getOffsetInstructions(lines)
 
-		stages := getOffsetInstructions(lines)
+	for _, seedRange := range seedRanges {
+		fmt.Printf("Checking from %d to %d\n", seedRange[0], seedRange[1])
+		// iterate by 25
+		for i := seedRange[0]; i < seedRange[1]; i++ {
+			loc := convertSeedToLocation(Seed{i, i}, stages)
 
-		for i, stage := range stages {
-			fmt.Println("Stage", i+1)
-			for s := range seeds {
-				switch s {
-				case len(seeds) / 4:
-					fmt.Println("Converted 25%")
-				case len(seeds) / 2:
-					fmt.Println("Converted 50%")
-				case (len(seeds) / 4) * 3:
-					fmt.Println("Converted 75%")
-				default:
-				}
-
-				rangeIdx := slices.IndexFunc(stage, func(ri OffsetRange) bool {
-					if seeds[s] >= ri.Start && seeds[s] <= ri.End {
-						return true
-					}
-					return false
-				})
-				if rangeIdx == -1 {
-					continue
-				}
-
-				ri := stage[rangeIdx]
-				seeds[s] += ri.Offset
+			// if location is low, iterate through last 25
+			if loc < lowestLocation {
+				fmt.Println("Found lower location:", loc)
+				lowestLocation = min(loc, lowestLocation)
+				// for j := min(i-1, seedRange[0]); j < i+1; j++ {
+				// 	locJ := convertSeedToLocation(Seed{j, j}, stages)
+				// 	if locJ < lowestLocation {
+				// 		fmt.Println("Found even lower location!", locJ, "from seed:", j)
+				// 	}
+				// 	lowestLocation = min(locJ, lowestLocation)
+				// }
 			}
 		}
-
-		sort.Slice(seeds, func(i, j int) bool {
-			return seeds[i] < seeds[j]
-		})
-
-		var lowLoc int64 = seeds[0]
-		fmt.Println("Lowest location for seed pairs", lowLoc)
-		lowestLocation = min(lowLoc, lowestLocation)
 	}
 
+	// Wrong answers:
+	/**
+		1
+	-22
+	-7
+	1
+	2
+	3
+	78775052
+	*/
 	return lowestLocation
 }
 
-func rapidOffset(loc int, stages [7][]OffsetRange) {
+func convertSeedToLocation(seed Seed, stages [7][]OffsetRange) int64 {
+	for _, stage := range stages {
+		rangeIdx := slices.IndexFunc(stage, func(ri OffsetRange) bool {
+			if seed.val >= ri.Start && seed.val <= ri.End {
+				return true
+			}
+			return false
+		})
+		if rangeIdx == -1 {
+			continue
+		}
 
+		ri := stage[rangeIdx]
+		seed.val += ri.Offset
+	}
+
+	return seed.val
 }
 
 func getOffsetsForSeedRange(seedRng SeedRange, stage []OffsetRange) []OffsetRange {

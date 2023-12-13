@@ -139,3 +139,27 @@ func ParseInt64(s string) int64 {
 	}
 	return val
 }
+
+func GetSurroundingCoords(i int, j int, arrHeight int, arrWidth int) [][]int {
+	dirs := [][]int{
+		{0, -1},  // left
+		{-1, -1}, // top left
+		{-1, 0},  // top
+		{-1, 1},  // top right
+		{0, 1},   // right
+		{1, 1},   // bottom right
+		{1, 0},   // bottom
+		{1, -1},  // bottom left
+	}
+
+	coords := [][]int{}
+	for _, dir := range dirs {
+		y, x := i+dir[0], j+dir[1]
+		// Add coordinate if it's within bounds of array
+		if y >= 0 && y < arrHeight && x >= 0 && x < arrWidth {
+			coords = append(coords, []int{y, x})
+		}
+	}
+
+	return coords
+}
