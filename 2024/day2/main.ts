@@ -57,24 +57,12 @@ function getGeneralSafety(row: number[], dir: "inc" | "dec"): number {
         assertTrue(row[i] != undefined && row[i+1] != undefined, `Invalid elements: ${row[i]} ${row[i+1]}`)
         const diff = row[i+1] - row[i]
         if (Math.abs(diff) > 3) {
-            // if (errCount <= 2) {
-            //     log(`ERROR: Math.abs(${row[i+1]} - ${row[i]}) > 3`)
-            // }
             errCount += 1
         } else if (diff == 0) { 
-            // if (errCount <= 2) {
-            //     log(`ERROR: ${row[i]} == ${row[i+1]}`)
-            // }
             errCount += 1
         } else if (dir == "inc" && diff < 0) {
-            // if (errCount <= 2) {
-            //     log(`ERROR: "inc" but ${row[i]} > ${row[i+1]}`)
-            // }
             errCount += 1
         } else if (dir == "dec" && diff > 0) {
-            // if (errCount <= 2) {
-            //     log(`ERROR: "dec" but ${row[i]} < ${row[i+1]}`)
-            // }
             errCount += 1
         }
     }
@@ -152,64 +140,51 @@ function validateSafety(r1: number, r2: number, direction: "inc" | "dec") {
     return true
 }
 
+function checkRow(r: number[]): { safe: boolean, dir: "inc" | "dec" } {
+    const diffs = r.map((e,i) => r[i+1] - e).filter(e => !isNaN(e))
 
-function solvePart1(nums: number[][]) {
-    let safeRows = 0
-    nums.forEach(r => {
-        let increasing = r[0] < r[1]
-        for (let i = 0; i < r.length -1; i++) {
-            const diff = r[i+1] - r[i]
-            if (increasing && diff <= 0) {
-                log(`Should be increasing: ${r[i]} - ${r[i+1]}`)
-                return false
-            } else if (!increasing && diff >= 0) {
-                log(`Should be decreasing: ${r[i]} - ${r[i+1]}`)
-                return false
-            }
+    let dir = diffs.reduce((sum, val) => sum + val, 0) > 0 ? "inc" : "dec" as "inc" | "dec"
 
-            if (Math.abs(diff) > 3) {
-                log(`|${r[i]}- ${r[i+1]}| > 3`)
-                return false
-            }
-        }
-        safeRows++
-    })
+    if (!diffs.every((v) => v > 0) && !diffs.every((v) => v < 0)) {
+        return {safe: false, dir };
+    }
+
+    if (diffs.some(d => Math.abs(d) > 3)) {
+        return {safe: false, dir };
+
+    }
+
+    return {safe: true, dir };
+
+}
+
+
+function solvePart1(rows: number[][]) {
+    let safeRows = rows.filter(r => checkRow(r).safe).length
 
     log("Part 1: " + safeRows + " safe rows")
 }
 
+
+
 function solvePart2(nums: number[][]) {
-    const results = nums.map((r, idx) => {
-        // Determine direction 
-        const dir = getRowDirection(r)
-        const errCount = getGeneralSafety(r, dir)
-        
-        // 0-1 errs == 353 safe rows
-        // 0-2 errs == 479 safe rows (126 more safe rows)
-        const safe_ish = errCount <= 1
-        let row = { idx, safe: safe_ish, data: r, dir, errors: errCount }
+    const safeRows = nums.filter(row => {
+        const res = checkRow(row);
+        if (!res.safe) {
+            for (let i = 0; i < row.length; i++) {
+                if (checkRow(row.toSpliced(i,1)).safe) {
+                    // Removing 1 element makes the row safe
+                    return true
+                }
+            }
+        }
+        return res.safe
+    }).length
 
-        return row;
-    }).filter(r => r.safe == true)
-      .filter(r => {
-            group(`Row #${r.idx+1}: ${r.data}\r`)
-            const res = parseRow(r.idx,r, true)
-            groupEnd()
-
-            return res
-      })
-
-    const safeRows = results.filter(r => r.safe == true).length
     log("Part 2: " + safeRows + " safe rows")
 
     return safeRows
 }
-
-
-
-
-
-
 
 
 /**
@@ -223,6 +198,7 @@ async function main() {
     // const testInput = "7 6 4 2 1\n1 2 7 8 9\n9 7 6 2 1\n1 3 2 4 5\n8 6 4 4 1\n1 3 6 7 9\n"
     // const rows = loadArrays(testInput.split("\n"))
     const rows = loadArrays(input.split("\n"))
+    solvePart1(rows)
     solvePart2(rows)
 }
 
