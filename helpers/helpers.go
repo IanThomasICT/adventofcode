@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Reads a file and returns a slice of strings where each element is a line in the file
 func ReadLinesAsArray(fileName string) ([]string, error) {
 	readFile, err := os.Open(fileName)
 	if err != nil {
@@ -24,6 +25,7 @@ func ReadLinesAsArray(fileName string) ([]string, error) {
 	return arr, nil
 }
 
+// Returns the sum of the top N values from the provided lines
 func GetSumOfTopNStars(lines []string, n int) int64 {
 	var currVal int64
 	var sums []int64
@@ -53,6 +55,7 @@ func GetSumOfTopNStars(lines []string, n int) int64 {
 	return total
 }
 
+// Converts a slice of bytes to a map with the count of each byte
 func SliceToOccurrencesMap(arr []byte) map[byte]int {
 	arrMap := make(map[byte]int)
 	for _, s := range arr {
@@ -61,6 +64,7 @@ func SliceToOccurrencesMap(arr []byte) map[byte]int {
 	return arrMap
 }
 
+// Converts a slice of strings to a map with the count of each string
 func SliceToMap(arr []string) map[string]int {
 	arrMap := make(map[string]int)
 	for _, s := range arr {
@@ -68,10 +72,13 @@ func SliceToMap(arr []string) map[string]int {
 	}
 	return arrMap
 }
+
+// Checks if a byte is a digit
 func IsDigit(c byte) bool {
 	return c >= 48 && c <= 57
 }
 
+// Splits a string into substrings of length n
 func SplitEveryN(s string, n int) []string {
 	if n <= 0 || n >= len(s) {
 		return []string{s}
@@ -94,6 +101,21 @@ func SplitEveryN(s string, n int) []string {
 	return arr
 }
 
+func Assert(condition bool, message string) {
+	if !condition {
+		panic(fmt.Sprintf("Failed Assertion: %s", message))
+	}
+}
+
+func Sum(nums []int) int {
+	sum := 0
+	for _, num := range nums {
+		sum += num
+	}
+	return sum
+}
+
+// Splits a string by a delimiter and converts the substrings to a slice of ints
 func SplitToIntSlice(s string, del string) []int {
 	splitElems := strings.Split(s, del)
 	nums := []int{}
@@ -101,7 +123,7 @@ func SplitToIntSlice(s string, del string) []int {
 	for _, str := range splitElems {
 		val, err := strconv.Atoi(str)
 		if err != nil {
-			log.Fatalf("Failed to parse %s to an int while splitting string %s", str, s)
+			log.Fatalf("Failed to parse '%s' to an int while splitting string %s", str, s)
 		}
 		nums = append(nums, val)
 	}
@@ -109,6 +131,7 @@ func SplitToIntSlice(s string, del string) []int {
 	return nums
 }
 
+// Splits a string by a delimiter and converts the substrings to a slice of int64s
 func SplitToInt64Slice(s string, del string) []int64 {
 	splitElems := strings.Split(s, del)
 	nums := []int64{}
@@ -124,6 +147,7 @@ func SplitToInt64Slice(s string, del string) []int64 {
 	return nums
 }
 
+// Parses a string to an int
 func ParseInt(s string) int {
 	val, err := strconv.Atoi(s)
 	if err != nil {
@@ -132,6 +156,7 @@ func ParseInt(s string) int {
 	return val
 }
 
+// Parses a string to an int64
 func ParseInt64(s string) int64 {
 	val, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
@@ -140,6 +165,7 @@ func ParseInt64(s string) int64 {
 	return val
 }
 
+// Returns the coordinates of the surrounding cells in a 2D array
 func GetSurroundingCoords(i int, j int, arrHeight int, arrWidth int) [][]int {
 	dirs := [][]int{
 		{0, -1},  // left
