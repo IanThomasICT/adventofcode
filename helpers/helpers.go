@@ -189,3 +189,26 @@ func GetSurroundingCoords(i int, j int, arrHeight int, arrWidth int) [][]int {
 
 	return coords
 }
+
+// Split array into arrays of length subLen
+func SplitToSubArrays(s []string, subLen int) [][]string {
+	sl := len(s)
+	if sl > 25 {
+		sl = 25
+	}
+	Assert(subLen > 0, fmt.Sprintf("SplitToSubArray(%v, %d): Sub array list must be greater than 0", s[:sl], subLen))
+
+	if len(s) <= subLen {
+		return [][]string{s}
+	}
+
+	var res [][]string
+	for i := 0; i < len(s); i += subLen {
+		end := i + subLen
+		if end > len(s) {
+			end = len(s)
+		}
+		res = append(res, s[i:end])
+	}
+	return res
+}
